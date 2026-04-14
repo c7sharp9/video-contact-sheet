@@ -41,7 +41,11 @@ Published pages land at `https://c7sharp9.github.io/client-preview/<slug>.html`.
 
 See `generate.js` header comment for all flags, or `CLAUDE.md` for orientation-in-30-seconds.
 
-**Setting up on a new Mac:** see `~/iCloud/.../Projects/business/reframe/video-contact-sheet/docs/setup.html` (step-by-step: Homebrew → ffmpeg → Node → clone → Shortcut).
+**Setting up on a new Mac (one command):**
+```sh
+curl -fsSL https://raw.githubusercontent.com/c7sharp9/video-contact-sheet/main/setup.sh | bash
+```
+This installs Homebrew (if missing), `ffmpeg`, `node`, `gh`; logs in to GitHub; clones both repos; runs `npm install`; smoke-tests. The only manual step left is building the macOS Shortcut once — and if you've already built it on another Mac, it syncs here automatically via iCloud. Detailed guide: `~/iCloud/.../Projects/business/reframe/video-contact-sheet/docs/setup.html`.
 
 ## Where things are
 
