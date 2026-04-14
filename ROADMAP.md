@@ -1,31 +1,25 @@
 # ROADMAP — Video Contact Sheet
 
 **Last updated:** 2026-04-13
-**Status:** 🟡 Experimental
+**Status:** 🟢 Living
 
 ---
 
 ## 🚧 Active
 
-### First real-project run
-- **Why:** The tool is only proven on synthetic ffmpeg testsrc clips. Need one real client folder through the pipeline end-to-end to shake out edge cases (weird filenames, mixed codecs, giant files, external drive I/O).
-- **What:** Point `generate.js` at a real videos folder (NAS, external SSD, or local) → generate → `--publish` to `client-preview` → send the URL to a real recipient.
-- **Acceptance criteria:** HTML renders correctly, durations are accurate, all videos in the folder produced a thumbnail (no silent skips), publish flow committed + pushed without needing manual intervention.
-- **Started:** 2026-04-13
-- **Expected:** next session with a real folder in hand
+_Nothing active. Tool is in steady use._
 
 ---
 
 ## ⏭ Next
 
-### `npm install` + verify `--pdf`
-Puppeteer is in `package.json` but not installed. On first real use that wants a PDF alongside the HTML, run `npm install` and verify the output PDF pagination + font rendering on Letter landscape. If it's ugly, tune the `@media print` block in `template.html`.
-
-### Listing page for `client-preview`
-Right now `c7sharp9.github.io/client-preview/` has no index — visitors need the exact filename. A tiny auto-generated `index.html` listing all `.html` files in the repo (excluding `archive/`) would make the bare URL useful. Either wire it into `generate.js` as a `--reindex` flag, or make it a separate workflow doc.
+### Per-project metadata (Frame.io link, client info, deliverables)
+Jonathan flagged wanting richer context on the published page beyond title + thumbnails — a Frame.io share URL (to the actual video files), client name, shoot date, deliverables list, notes. Cleanest approach: optional `project.json` sidecar in the video folder that the generator auto-detects and merges into the injected data. Template gets a "Project Info" section above the grid with the Frame.io link as a prominent button. Graceful degrade when no sidecar present.
+Effort: S-M
+Blockers: none — trigger whenever Jonathan needs it on a real project.
 
 ### Metadata beyond filename + duration
-User may want resolution, codec, file size, or date-taken on each card. Already collected by `ffprobe`; just a matter of exposing it in `data.json` and adding markup to `template.html`. Trigger when first real-project run shows what's missing.
+Resolution, codec, file size, date-taken. Already collected by `ffprobe`; just a matter of exposing it in `data.json` and adding markup to `template.html`. Trigger when a real run shows what's missing.
 
 ---
 
@@ -52,9 +46,9 @@ Effort: M
 Blockers: none
 
 ### Turn into a Claude Code skill
-Wrap the `--publish` flow as a `deploy-video-contact-sheet` skill so Jonathan can say "generate a contact sheet of the Smith wedding footage and publish it" without typing the command. Complements `deploy-quick-share-page` in `catalog/workflows/`.
+Wrap the `--publish` flow as a `deploy-video-contact-sheet` skill so Jonathan can say "generate a contact sheet of the Smith wedding footage and publish it" without typing the command. Complements `deploy-quick-share-page` in `catalog/workflows/` and the macOS Shortcut. Lower priority now that the Shortcut exists, but still cheap to add.
 Effort: S
-Blockers: tool needs to stabilize first (~5 real runs)
+Blockers: tool needs ~5 real runs of real usage before deciding which invocation path is the one worth investing in.
 
 ### Watermark / header customization
 Add a brand strip, client logo, or date banner at the top of the HTML. Easy with a few CSS vars and an optional `--logo <path>` flag (inlines as base64).
@@ -75,10 +69,17 @@ Blockers: discussion with Jonathan about threat model
 - **2026-04-13:** GitHub Pages enabled on `c7sharp9/client-preview` (main/root)
 - **2026-04-13:** `--publish` flag wired, dry-run verified end-to-end
 - **2026-04-13:** Migrated to canonical `~/Code/video-contact-sheet` path; renamed from "Video Thumbnail Contact Sheet"
+- **2026-04-13:** Public GitHub repo created at `c7sharp9/video-contact-sheet`; canonical git identity set
+- **2026-04-13:** First real-project run — Vasquez Implant, 40 clips, published live
+- **2026-04-13:** `npm install` done, `--pdf` verified, `--pageless` flag added (single continuous page sized to content)
+- **2026-04-13:** Template — dark theme preserved in PDF, outer border added
+- **2026-04-13:** Auto-generated `index.html` at `c7sharp9.github.io/client-preview/` listing all published pages, regenerated on every `--publish`
+- **2026-04-13:** `make-sheet` interactive wrapper for macOS Shortcut / Finder Quick Action use
+- **2026-04-13:** Cowork-side setup guide at `~/iCloud/.../video-contact-sheet/docs/setup.html` for per-Mac onboarding
 
 ---
 
 ## ❌ Explicitly not doing
 
 - **Hosting this on a paid/private Pages plan.** Accepted public-URL trade-off for now. Revisit if a client-facing sheet has NDA constraints.
-- **Building a web UI for the tool.** CLI is enough. If invocation gets tiresome, the Claude Code skill (in Menu) is the answer, not a UI.
+- **Building a web UI for the tool.** CLI + `make-sheet` interactive wrapper + macOS Shortcut cover the invocation ergonomics. Considered and rejected Electron/Tauri native apps and a local web UI — overkill for a solo tool. Shortcut syncs via iCloud across all Macs, which was the real requirement.

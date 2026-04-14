@@ -84,3 +84,87 @@
 **Reasoning:** Most runs will be iterative (tweak template, regenerate, inspect locally). Auto-publishing on every iteration would spam the `client-preview` commit history and produce confusing "latest version" behavior for anyone holding an old URL. Explicit `--publish` is a clean checkpoint: "this version is the one I'm sending."
 
 **Trade-offs accepted:** One extra flag to remember. Worth it for commit hygiene.
+
+---
+
+## 2026-04-13 — Dark theme preserved in PDF (not switched to light for print)
+
+**Context:** Original template had `@media print` overrides that flipped to white background + dark text — the classic "print-friendly" pattern. First real PDF rendered fine but was visually inconsistent with the HTML sheet.
+
+**Alternatives considered:**
+- Keep the light-for-print convention — better for ink on paper, matches document norms.
+- Drop the print overrides — PDF looks identical to the web page, consistent brand feel.
+
+**Chosen:** Drop the print overrides. Dark PDF matches dark HTML.
+
+**Reasoning:** These PDFs are for on-screen review by clients, not printed out. Matching the HTML look removes a needless context switch and looks more considered. If someone ever wants to print one, the PDF works fine on paper (just uses more ink).
+
+**Trade-offs accepted:** More ink if printed. Low-probability case for this use.
+
+---
+
+## 2026-04-13 — `--pageless` PDF as a first-class flag (one continuous page sized to content)
+
+**Context:** User asked for a "pageless" PDF — a single continuous page rather than the default Letter-landscape pagination. Two approaches: replace the default, or add alongside.
+
+**Alternatives considered:**
+- Replace default with pageless — simpler, one PDF mode.
+- Keep Letter landscape default, add `--pageless` flag — both modes available.
+
+**Chosen:** Keep both; `--pageless` is opt-in.
+
+**Reasoning:** Letter landscape is still the right choice if someone actually does want to print. Pageless is the right choice for on-screen review. Zero cost to keep both since the branching is a 5-line conditional.
+
+**Trade-offs accepted:** Two PDF code paths. One `@page` CSS override trick to remember (see LEARNINGS 2026-04-13 on `@page` vs puppeteer width/height).
+
+---
+
+## 2026-04-13 — macOS Shortcuts (iCloud-synced) over Electron app or local web UI
+
+**Context:** Jonathan needed the tool accessible across multiple Macs and didn't want to use the Terminal each time.
+
+**Alternatives considered:**
+- Electron/Tauri native .app — full native GUI, distributable, overkill for this.
+- Local web UI (Express server on localhost:3000 with drag-and-drop) — familiar tech, but yet-another-server to maintain.
+- macOS Automator droplet — simple, but doesn't sync across machines natively.
+- macOS Shortcut + `make-sheet` shell wrapper — Shortcut auto-syncs via iCloud; shell wrapper keeps the logic in the repo where it can be git-versioned.
+
+**Chosen:** Shortcut + `make-sheet` wrapper.
+
+**Reasoning:** iCloud sync is the killer feature — build once, works on every Mac signed into the same Apple ID. Shell wrapper lives in the repo (version controlled, single source of truth). Shortcut is a 4-step GUI build, documented in the setup guide. Per-Mac prerequisites (brew, node, ffmpeg, clone) are a one-time 3-minute setup.
+
+**Trade-offs accepted:** User has to manually build the Shortcut once (no way to ship a `.shortcut` file in a git repo cleanly because they're signed). Mitigated by a screenshot-driven setup guide in the Cowork docs folder.
+
+---
+
+## 2026-04-13 — Interactive prompts in a shell wrapper, not in `generate.js`
+
+**Context:** We wanted Shortcuts/Quick Actions to prompt for folder, title, slug. Options: add prompts inside `generate.js`, or wrap it in a shell script that handles the prompts.
+
+**Alternatives considered:**
+- Prompts in `generate.js` (via `readline` or inquirer) — keeps everything in Node.
+- Prompts in a shell wrapper using `osascript` — dialogs are native macOS.
+- Shortcut handles prompts directly, calls `generate.js` with args — couples prompting to the Shortcut, harder to invoke from Terminal.
+
+**Chosen:** `make-sheet` shell wrapper using `osascript` dialogs.
+
+**Reasoning:** Native macOS dialogs look right on macOS (file picker = real Finder picker, not a Node ASCII menu). Keeps `generate.js` pure — it stays a headless, scriptable CLI. Wrapper is thin and callable from Terminal, Shortcut, or Alfred identically.
+
+**Trade-offs accepted:** macOS-only wrapper. If the tool ever needs to run on Linux/Windows, `generate.js` still works — just without the wrapper's conveniences.
+
+---
+
+## 2026-04-13 — Auto-regenerate `client-preview/index.html` on every publish
+
+**Context:** The Pages repo had no index — anyone visiting `c7sharp9.github.io/client-preview/` got a 404 (or GitHub's default listing if directory listing was on). Jonathan asked for a "running document of all URLs published."
+
+**Alternatives considered:**
+- Separate script `build-index.js` run manually before push.
+- Crontab or GitHub Action that rebuilds the index.
+- Bake index generation into `generate.js` — runs automatically on every `--publish`.
+
+**Chosen:** Bake into `generate.js`. Every `--publish` regenerates `index.html` from the filesystem.
+
+**Reasoning:** Zero ceremony — the index can never drift out of sync with the actual files. No CI dependency. No separate command to remember. If someone manually drops a `.html` into the repo and pushes without going through `generate.js`, the next `--publish` will pick it up automatically.
+
+**Trade-offs accepted:** `generate.js` now owns one more concern (a small HTML template inline). Acceptable — it's ~50 lines and tightly scoped to one function (`writePublishIndex`).

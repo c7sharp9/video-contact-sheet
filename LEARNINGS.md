@@ -51,6 +51,22 @@ Returns immediately with `status: building`. Site live at the `html_url` within 
 
 ---
 
+## 2026-04-13 — `@page` CSS rule beats `page.pdf({ width, height })`
+
+**Tags:** puppeteer, css, pdf
+
+**What happened:** First cut of `--pageless` passed `width`/`height` to `page.pdf()` sized to the document's `scrollHeight`, expected one big page. Got a truncated Letter-landscape page with only 12 of 40 thumbnails.
+
+**The fix / insight:** `template.html`'s `@media print` block contains `@page { size: Letter landscape; margin: 0.4in; }`. When you `emulateMediaType("print")`, that `@page` rule is active and Chrome paginates to Letter landscape regardless of the `width`/`height` you pass to `page.pdf()`. The `pageRanges: "1"` in my original code then kept only page 1.
+
+Two parts to the fix:
+1. For pageless, **don't** call `emulateMediaType("print")` — stay on screen media so `@page` never activates.
+2. **Inject** a matching `@page { size: <w>px <h>px; margin: 0 }` with `page.addStyleTag()` so any other `@page` rule is overridden.
+
+Result: one continuous page sized to the full content. Letter-landscape paginated PDF still available by default (no `--pageless`).
+
+---
+
 ## 2026-04-13 — Base64-embedded thumbs make a 3-video sheet ~70 KB
 
 **Tags:** performance, html

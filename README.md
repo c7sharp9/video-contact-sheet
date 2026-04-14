@@ -2,7 +2,7 @@
 name: Video Contact Sheet
 type: code
 audience: internal
-status: experimental
+status: living
 catalogued: 2026-04-13
 primary_location: ~/Code/video-contact-sheet
 repo: c7sharp9/video-contact-sheet
@@ -21,19 +21,27 @@ A CLI tool that scans a folder of videos, extracts one poster frame per video wi
 
 ## Quick start
 
+**Easiest path — interactive wrapper:**
 ```sh
 cd ~/Code/video-contact-sheet
+./make-sheet
+# → folder picker → title prompt → publish slug prompt → HTML + pageless PDF open
+```
+
+**Direct CLI:**
+```sh
 node generate.js "/path/to/videos" --title "Project Name"
 # → output/<folder>.html (single self-contained file)
+
+# With pageless PDF + publish to GitHub Pages:
+node generate.js "/path/to/videos" --title "Pretty Title" --pdf --pageless --publish client-slug
 ```
 
-Publish straight to `c7sharp9.github.io/client-preview/<slug>.html`:
+Published pages land at `https://c7sharp9.github.io/client-preview/<slug>.html`. An auto-generated `index.html` at the root of that repo lists every published page, newest first.
 
-```sh
-node generate.js "/path/to/videos" --publish client-slug --title "Pretty Title"
-```
+See `generate.js` header comment for all flags, or `CLAUDE.md` for orientation-in-30-seconds.
 
-See `generate.js` header comment for all flags, or `CLAUDE.md` for the orientation-in-30-seconds.
+**Setting up on a new Mac:** see `~/iCloud/.../Projects/business/reframe/video-contact-sheet/docs/setup.html` (step-by-step: Homebrew → ffmpeg → Node → clone → Shortcut).
 
 ## Where things are
 
@@ -52,11 +60,11 @@ See `generate.js` header comment for all flags, or `CLAUDE.md` for the orientati
 
 ## Current state
 
-- First end-to-end run verified 2026-04-13 with synthetic test clips (3 videos → 70 KB HTML, thumbnails + durations rendered correctly).
-- Not yet used on a real project. Status stays 🟡 Experimental until first real use.
-- `ffmpeg` 8.1, `node` 25, `gh` 2.89 installed via Homebrew on 2026-04-13.
-- GitHub Pages was enabled on `c7sharp9/client-preview` during the initial session (main branch, root).
-- `--pdf` flag wired but Puppeteer dep not installed yet — run `npm install` on first PDF render.
+- Status 🟢 Living — first real project run on 2026-04-13 (Vasquez Implant, 40 clips → 652 KB HTML + 653 KB pageless PDF, published to GitHub Pages).
+- Puppeteer installed; `--pdf --pageless` verified end-to-end.
+- `make-sheet` interactive wrapper added for use from macOS Shortcuts (folder picker, title/slug prompts, opens outputs, copies URL to clipboard).
+- Every `--publish` regenerates `client-preview/index.html` — a running, public list of all published pages.
+- `ffmpeg` 8.1, `node` 25, `gh` 2.89 installed via Homebrew.
 
 ## How to contribute / update
 
