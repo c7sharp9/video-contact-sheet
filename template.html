@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Contact Sheet</title>
+<style>
+  /* ============================================================
+     EDIT THIS FILE to change the look. Re-run the generator to
+     produce a fresh output.html. The data is injected below as
+     window.__DATA__ and rendered by the <script> at the bottom.
+     ============================================================ */
+
+  :root {
+    --bg: #0e0e10;
+    --fg: #ececec;
+    --muted: #8a8a92;
+    --accent: #ffb454;
+    --card: #17171a;
+    --border: #2a2a2f;
+    --radius: 10px;
+    --gap: 18px;
+    --thumb-aspect: 16 / 9;
+    --columns: 4;
+    --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); font-family: var(--font); }
+  body { padding: 40px 48px 80px; }
+
+  header.sheet-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+    gap: 24px; flex-wrap: wrap;
+  }
+  .sheet-head h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.01em; }
+  .sheet-head .meta { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .sheet-head .meta span + span::before { content: "  ·  "; color: var(--border); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
+    gap: var(--gap);
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    break-inside: avoid;
+  }
+  .thumb {
+    position: relative;
+    aspect-ratio: var(--thumb-aspect);
+    background: #000 center/cover no-repeat;
+    background-color: #000;
+  }
+  .thumb .duration {
+    position: absolute; bottom: 8px; right: 8px;
+    background: rgba(0,0,0,0.72); color: #fff;
+    font-size: 11px; font-variant-numeric: tabular-nums;
+    padding: 2px 6px; border-radius: 4px;
+    letter-spacing: 0.02em;
+  }
+  .caption {
+    padding: 10px 12px 12px;
+    font-size: 12.5px; line-height: 1.35;
+    word-break: break-word;
+  }
+  .caption .name { color: var(--fg); }
+  .caption .sub { color: var(--muted); font-size: 11px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+  footer.sheet-foot {
+    margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border);
+    color: var(--muted); font-size: 11px; display: flex; justify-content: space-between; gap: 16px;
+  }
+
+  /* Print / PDF tuning */
+  @media print {
+    :root { --columns: 4; --gap: 10px; }
+    @page { size: Letter landscape; margin: 0.4in; }
+    body { background: #fff; color: #111; padding: 0; }
+    .card { background: #fff; border-color: #ccc; }
+    .caption .name { color: #111; } .caption .sub { color: #555; }
+    header.sheet-head { border-color: #ccc; }
+    header.sheet-head h1 { color: #111; }
+    header.sheet-head .meta { color: #555; }
+    footer.sheet-foot { border-color: #ccc; color: #555; }
+  }
+
+  /* Responsive */
+  @media (max-width: 1100px) { :root { --columns: 3; } }
+  @media (max-width:  720px) { :root { --columns: 2; } body { padding: 24px; } }
+</style>
+</head>
+<body>
+
+<header class="sheet-head">
+  <h1 id="sheet-title">Video Contact Sheet</h1>
+  <div class="meta">
+    <span id="sheet-count"></span>
+    <span id="sheet-total"></span>
+    <span id="sheet-generated"></span>
+  </div>
+</header>
+
+<main class="grid" id="sheet"></main>
+
+<footer class="sheet-foot">
+  <span id="sheet-source"></span>
+  <span>Generated with Video Thumbnail Contact Sheet</span>
+</footer>
+
+<!-- DATA:START -->
+<script id="contact-sheet-data" type="application/json">
+{"title":"Video Contact Sheet","source":"(no data — run generate.js)","generatedAt":"","videos":[]}
+</script>
+<!-- DATA:END -->
+
+<script>
+(function () {
+  const data = JSON.parse(document.getElementById("contact-sheet-data").textContent);
+
+  function fmtDuration(s) {
+    if (!isFinite(s) || s < 0) return "";
+    s = Math.round(s);
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    const pad = (n) => String(n).padStart(2, "0");
+    return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`;
+  }
+
+  const totalSeconds = data.videos.reduce((a, v) => a + (v.duration || 0), 0);
+
+  document.title = data.title || document.title;
+  document.getElementById("sheet-title").textContent = data.title || "Video Contact Sheet";
+  document.getElementById("sheet-count").textContent = `${data.videos.length} video${data.videos.length === 1 ? "" : "s"}`;
+  document.getElementById("sheet-total").textContent = totalSeconds ? `total ${fmtDuration(totalSeconds)}` : "";
+  document.getElementById("sheet-generated").textContent = data.generatedAt ? `generated ${data.generatedAt}` : "";
+  document.getElementById("sheet-source").textContent = data.source || "";
+
+  const grid = document.getElementById("sheet");
+  const frag = document.createDocumentFragment();
+  for (const v of data.videos) {
+    const card = document.createElement("article");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="thumb" style="background-image:url('${v.thumb}')">
+        ${v.duration ? `<span class="duration">${fmtDuration(v.duration)}</span>` : ""}
+      </div>
+      <div class="caption">
+        <div class="name"></div>
+        ${v.subtitle ? `<div class="sub"></div>` : ""}
+      </div>`;
+    card.querySelector(".name").textContent = v.name;
+    if (v.subtitle) card.querySelector(".sub").textContent = v.subtitle;
+    frag.appendChild(card);
+  }
+  grid.appendChild(frag);
+})();
+</script>
+</body>
+</html>

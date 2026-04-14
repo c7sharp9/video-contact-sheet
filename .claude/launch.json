@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "preview",
+      "runtimeExecutable": "/opt/homebrew/bin/node",
+      "runtimeArgs": ["-e", "const http=require('http'),fs=require('fs'),path=require('path');const port=parseInt(process.env.PORT||'3000');http.createServer((req,res)=>{let p=decodeURIComponent(req.url.split('?')[0]);if(p==='/')p='/_test/output.html';const f=path.join(process.cwd(),p);fs.readFile(f,(e,d)=>{if(e){res.writeHead(404);res.end('404');return}const ext=path.extname(f).toLowerCase();const t={'.html':'text/html','.js':'text/javascript','.css':'text/css','.jpg':'image/jpeg','.png':'image/png'}[ext]||'application/octet-stream';res.writeHead(200,{'Content-Type':t});res.end(d)})}).listen(port,()=>console.log('http://localhost:'+port))"],
+      "port": 3000
+    }
+  ]
+}

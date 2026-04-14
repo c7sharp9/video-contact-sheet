@@ -1,0 +1,19 @@
+{
+  "name": "video-contact-sheet",
+  "version": "0.1.0",
+  "description": "Generate a self-contained HTML contact sheet of video thumbnails from a folder.",
+  "type": "module",
+  "bin": {
+    "contact-sheet": "./generate.js"
+  },
+  "scripts": {
+    "generate": "node generate.js",
+    "pdf": "node generate.js --pdf"
+  },
+  "dependencies": {
+    "puppeteer": "^23.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

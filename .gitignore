@@ -1,0 +1,4 @@
+node_modules/
+output/*_thumbs/
+.DS_Store
+*.log
