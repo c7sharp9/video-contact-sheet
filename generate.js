@@ -14,6 +14,9 @@
  *   --width <px>        Thumbnail width in px (default: 480)
  *   --quality <1-31>    JPEG quality (lower = better, default: 4)
  *   --pdf               Also render a PDF via Puppeteer (output.pdf next to html)
+ *   --pageless          With --pdf: render as a single continuous page sized
+ *                       to the full document (no page breaks). Default is
+ *                       Letter landscape.
  *   --template <path>   Template HTML file (default: ./template.html)
  *   --no-embed          Write thumbs as files next to html instead of base64
  *   --concurrency <n>   Parallel ffmpeg workers (default: 4)
@@ -93,6 +96,63 @@ function run(cmd, argv, opts = {}) {
       else reject(new Error(`${cmd} exited ${code}: ${stderr.slice(-400)}`));
     });
   });
+}
+
+async function writePublishIndex(repoDir) {
+  const entries = await fs.readdir(repoDir, { withFileTypes: true });
+  const pages = [];
+  for (const e of entries) {
+    if (!e.isFile()) continue;
+    if (!e.name.endsWith(".html")) continue;
+    if (e.name === "index.html") continue;
+    const stat = await fs.stat(path.join(repoDir, e.name));
+    pages.push({
+      name: e.name,
+      slug: e.name.replace(/\.html$/, ""),
+      mtime: stat.mtime,
+    });
+  }
+  pages.sort((a, b) => b.mtime - a.mtime);
+
+  const rows = pages.map((p) => {
+    const date = p.mtime.toISOString().slice(0, 10);
+    return `    <li><a href="./${p.name}">${p.slug}</a> <span class="date">${date}</span></li>`;
+  }).join("\n");
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quick-Share Pages</title>
+<style>
+  :root { --bg: #0e0e10; --fg: #ececec; --muted: #8a8a92; --accent: #ffb454; --border: #2a2a2f; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif; }
+  body { padding: 48px 56px 80px; max-width: 820px; }
+  h1 { margin: 0 0 8px; font-size: 28px; font-weight: 600; letter-spacing: -0.01em; }
+  p.lede { color: var(--muted); margin: 0 0 32px; font-size: 14px; }
+  ul { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--border); }
+  li { padding: 12px 0; border-bottom: 1px solid var(--border); display: flex;
+    justify-content: space-between; align-items: baseline; gap: 16px; }
+  a { color: var(--accent); text-decoration: none; font-size: 15px; word-break: break-word; }
+  a:hover { text-decoration: underline; }
+  .date { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  footer { color: var(--muted); font-size: 11px; margin-top: 40px; }
+</style>
+</head>
+<body>
+  <h1>Quick-Share Pages</h1>
+  <p class="lede">${pages.length} published page${pages.length === 1 ? "" : "s"}. Newest first.</p>
+  <ul>
+${rows}
+  </ul>
+  <footer>Updated ${new Date().toISOString().slice(0, 19).replace("T", " ")} UTC</footer>
+</body>
+</html>
+`;
+  await fs.writeFile(path.join(repoDir, "index.html"), html);
 }
 
 async function walkVideos(dir, recurse) {
@@ -237,19 +297,45 @@ async function main() {
   if (makePdf) {
     const { default: puppeteer } = await import("puppeteer");
     const pdfPath = outPath.replace(/\.html?$/i, "") + ".pdf";
-    console.log(`[pdf]   rendering ${pdfPath}`);
+    const pageless = !!args.pageless;
+    console.log(`[pdf]   rendering ${pdfPath}${pageless ? " (pageless)" : ""}`);
     const browser = await puppeteer.launch({ headless: "new" });
     try {
       const page = await browser.newPage();
+      if (pageless) {
+        await page.setViewport({ width: 1280, height: 800 });
+      }
       await page.goto("file://" + outPath, { waitUntil: "networkidle0" });
-      await page.emulateMediaType("print");
-      await page.pdf({
-        path: pdfPath,
-        format: "Letter",
-        landscape: true,
-        printBackground: true,
-        margin: { top: "0.4in", bottom: "0.4in", left: "0.4in", right: "0.4in" },
-      });
+      if (pageless) {
+        // Measure on screen media (template's @media print sets a fixed
+        // Letter-landscape @page that would otherwise paginate us).
+        const { w, h } = await page.evaluate(() => ({
+          w: document.documentElement.scrollWidth,
+          h: document.documentElement.scrollHeight,
+        }));
+        // Override any @page rule in the document with a single page sized
+        // exactly to the content.
+        await page.addStyleTag({
+          content: `@page { size: ${w}px ${h}px; margin: 0; }`,
+        });
+        await page.pdf({
+          path: pdfPath,
+          width: `${w}px`,
+          height: `${h}px`,
+          printBackground: true,
+          margin: { top: 0, bottom: 0, left: 0, right: 0 },
+          preferCSSPageSize: false,
+        });
+      } else {
+        await page.emulateMediaType("print");
+        await page.pdf({
+          path: pdfPath,
+          format: "Letter",
+          landscape: true,
+          printBackground: true,
+          margin: { top: "0.4in", bottom: "0.4in", left: "0.4in", right: "0.4in" },
+        });
+      }
     } finally {
       await browser.close();
     }
@@ -270,10 +356,15 @@ async function main() {
     catch { throw new Error(`--repo ${publishRepo} is not a git repo. Clone c7sharp9/client-preview there first.`); }
     await fs.copyFile(outPath, destFile);
     console.log(`[pub]   copied → ${destFile}`);
+
+    // Regenerate index.html listing every published sheet
+    await writePublishIndex(publishRepo);
+    console.log(`[pub]   updated index.html`);
+
     if (dryRun) { console.log("[pub]   dry-run, skipping commit/push"); }
     else {
       const git = (...a) => run("git", a, { cwd: publishRepo });
-      await git("add", `${slug}.html`);
+      await git("add", `${slug}.html`, "index.html");
       // commit only if there are changes
       try {
         await run("git", ["diff", "--cached", "--quiet"], { cwd: publishRepo });

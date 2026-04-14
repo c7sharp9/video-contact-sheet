@@ -27,7 +27,11 @@
 
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); font-family: var(--font); }
-  body { padding: 40px 48px 80px; }
+  body {
+    padding: 40px 48px 80px;
+    border: 1px solid var(--border);
+    min-height: 100vh;
+  }
 
   header.sheet-head {
     display: flex; align-items: baseline; justify-content: space-between;
@@ -78,17 +82,11 @@
     color: var(--muted); font-size: 11px; display: flex; justify-content: space-between; gap: 16px;
   }
 
-  /* Print / PDF tuning */
+  /* Print / PDF tuning — keep dark theme, tighten grid */
   @media print {
     :root { --columns: 4; --gap: 10px; }
     @page { size: Letter landscape; margin: 0.4in; }
-    body { background: #fff; color: #111; padding: 0; }
-    .card { background: #fff; border-color: #ccc; }
-    .caption .name { color: #111; } .caption .sub { color: #555; }
-    header.sheet-head { border-color: #ccc; }
-    header.sheet-head h1 { color: #111; }
-    header.sheet-head .meta { color: #555; }
-    footer.sheet-foot { border-color: #ccc; color: #555; }
+    body { padding: 24px; }
   }
 
   /* Responsive */
