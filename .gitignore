@@ -1,4 +1,6 @@
 node_modules/
-output/*_thumbs/
+output/
+_test/
 .DS_Store
 *.log
+.claude/settings.local.json
