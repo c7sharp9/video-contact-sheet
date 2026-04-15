@@ -86,6 +86,7 @@ const makePdf = !!args.pdf;
 const publish = args.publish; // true (flag only) or string (slug)
 const publishRepo = path.resolve(args.repo || DEFAULT_PUBLISH_REPO);
 const dryRun = !!args["dry-run"];
+const vertical = !!args.vertical;
 
 // ---------- helpers ----------
 function run(cmd, argv, opts = {}) {
@@ -284,6 +285,7 @@ async function main() {
     contact,
     source: videosDir,
     generatedAt: new Date().toISOString().replace("T", " ").slice(0, 16) + " UTC",
+    orientation: vertical ? "vertical" : "horizontal",
     videos: clean,
   };
 

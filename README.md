@@ -21,7 +21,11 @@ A CLI tool that scans a folder of videos, extracts one poster frame per video wi
 
 ## Quick start
 
-**Easiest path — interactive wrapper:**
+**Easiest path — double-click in Finder:**
+
+Open `~/Code/video-contact-sheet/make-sheet` in Finder and double-click it. Terminal opens automatically and runs the interactive prompts — folder picker, title, publish slug — no commands to type.
+
+**Or from Terminal:**
 ```sh
 cd ~/Code/video-contact-sheet
 ./make-sheet

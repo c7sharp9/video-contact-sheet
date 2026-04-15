@@ -67,6 +67,13 @@ return n
 OSA
 ) || exit 1
 
+# ---- orientation ----
+ORIENTATION=$(osascript <<OSA
+set o to button returned of (display dialog "Layout orientation:" with title "Make Contact Sheet" buttons {"Horizontal", "Vertical"} default button "Horizontal")
+return o
+OSA
+) || exit 1
+
 # ---- publish slug (blank = local only) ----
 DEFAULT_SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
 SLUG=$(osascript <<OSA
@@ -84,6 +91,9 @@ ARGS=("$FOLDER" --title "$TITLE" --pdf --pageless)
 [[ -n "$CLIENT" ]]    && ARGS+=(--client "$CLIENT")
 [[ -n "$VIDEO_URL" ]] && ARGS+=(--url "$VIDEO_URL")
 [[ -n "$NOTES" ]]     && ARGS+=(--notes "$NOTES")
+if [[ "$ORIENTATION" == "Vertical" ]]; then
+  ARGS+=(--vertical)
+fi
 if [[ -n "$SLUG" ]]; then
   ARGS+=(--publish "$SLUG")
 fi

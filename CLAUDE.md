@@ -13,6 +13,12 @@ A single-file Node CLI that scans a folder of videos, extracts one poster frame 
 
 ## How to run locally
 
+Three ways to launch (easiest first):
+
+1. **Double-click in Finder:** open `~/Code/video-contact-sheet/make-sheet` and double-click it — Terminal opens and runs the interactive prompts automatically. No commands to type.
+2. **Terminal:** `cd ~/Code/video-contact-sheet && ./make-sheet`
+3. **macOS Shortcut:** right-click a folder of videos in Finder → Quick Actions → Make Contact Sheet
+
 ```sh
 # Interactive wrapper (folder picker, prompts for title/client/url/notes/slug, opens outputs)
 ./make-sheet

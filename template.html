@@ -163,6 +163,12 @@
 
   function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
 
+  // -- Orientation --
+  if (data.orientation === "vertical") {
+    document.documentElement.style.setProperty("--thumb-aspect", "9 / 16");
+    document.documentElement.style.setProperty("--columns", "6");
+  }
+
   const grid = document.getElementById("sheet");
   const frag = document.createDocumentFragment();
   for (const v of data.videos) {
