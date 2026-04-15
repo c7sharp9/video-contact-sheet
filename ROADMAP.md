@@ -1,6 +1,6 @@
 # ROADMAP — Video Contact Sheet
 
-**Last updated:** 2026-04-13
+**Last updated:** 2026-04-14
 **Status:** 🟢 Living
 
 ---
@@ -13,10 +13,10 @@ _Nothing active. Tool is in steady use._
 
 ## ⏭ Next
 
-### Per-project metadata (Frame.io link, client info, deliverables)
-Jonathan flagged wanting richer context on the published page beyond title + thumbnails — a Frame.io share URL (to the actual video files), client name, shoot date, deliverables list, notes. Cleanest approach: optional `project.json` sidecar in the video folder that the generator auto-detects and merges into the injected data. Template gets a "Project Info" section above the grid with the Frame.io link as a prominent button. Graceful degrade when no sidecar present.
-Effort: S-M
-Blockers: none — trigger whenever Jonathan needs it on a real project.
+### Per-project metadata via sidecar `project.json`
+CLI flags (`--client`, `--url`, `--notes`, `--contact`) now cover the core metadata. Next step: optional `project.json` sidecar in the video folder so these fields auto-populate without typing them each time. Generator would auto-detect and merge, CLI flags would override.
+Effort: S
+Blockers: none — trigger when the same client/project gets multiple sheets.
 
 ### Metadata beyond filename + duration
 Resolution, codec, file size, date-taken. Already collected by `ffprobe`; just a matter of exposing it in `data.json` and adding markup to `template.html`. Trigger when a real run shows what's missing.
@@ -76,6 +76,13 @@ Blockers: discussion with Jonathan about threat model
 - **2026-04-13:** Auto-generated `index.html` at `c7sharp9.github.io/client-preview/` listing all published pages, regenerated on every `--publish`
 - **2026-04-13:** `make-sheet` interactive wrapper for macOS Shortcut / Finder Quick Action use
 - **2026-04-13:** Cowork-side setup guide at `~/iCloud/.../video-contact-sheet/docs/setup.html` for per-Mac onboarding
+- **2026-04-14:** Project metadata fields — `--client`, `--url`, `--notes`, `--contact` CLI flags; info section above grid in template; contact defaults to Jonathan Ayala / jon@innerviewmedia.com
+- **2026-04-14:** `make-sheet` prompts for client, video files URL, and notes; client auto-fills from last run; slug auto-fills from title
+- **2026-04-14:** Removed "Generated with Video Thumbnail Contact Sheet" footer text
+- **2026-04-14:** Removed public `index.html` from `client-preview` — clients only see pages shared via direct URL
+- **2026-04-14:** GitHub Action in `client-preview` auto-generates `README.md` with full live URLs on every push
+- **2026-04-14:** `--publish` now runs `git pull --rebase` before pushing to stay in sync with Action commits
+- **2026-04-14:** Removed `writePublishIndex` from `generate.js` — index generation now handled by GitHub Action (README)
 
 ---
 

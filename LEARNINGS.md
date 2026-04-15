@@ -67,6 +67,26 @@ Result: one continuous page sized to the full content. Letter-landscape paginate
 
 ---
 
+## 2026-04-14 — GitHub Action commits cause `--publish` push to fail
+
+**Tags:** git, github-actions, publish
+
+**What happened:** Added a GitHub Action to `client-preview` that auto-regenerates `README.md` on every push. The Action's commit lands on `origin/main` within seconds. On the next `--publish`, the local repo is one commit behind, and `git push` is rejected with "fetch first."
+
+**The fix / insight:** Added `git pull --rebase origin main` to the publish flow in `generate.js`, before staging/committing. Rebase keeps history linear and the extra round trip is negligible. This applies to any workflow where a GitHub Action pushes commits to the same branch you're pushing to locally.
+
+---
+
+## 2026-04-14 — `osascript` default answer for shell variable persistence
+
+**Tags:** make-sheet, osascript, bash
+
+**What happened:** Wanted `make-sheet` to remember the last client name between runs. macOS `display dialog` supports a `default answer` field — passing a shell variable into the AppleScript heredoc populates the text field with the previous value.
+
+**The fix / insight:** Write the value to a `.last-client` file after each prompt; read it at the top of the script. The `default answer "$LAST_CLIENT"` in the osascript heredoc pre-fills the dialog. Same pattern works for any field you want to persist between runs. Gitignore the state file.
+
+---
+
 ## 2026-04-13 — Base64-embedded thumbs make a 3-video sheet ~70 KB
 
 **Tags:** performance, html

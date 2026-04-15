@@ -17,6 +17,11 @@ cd "$SCRIPT_DIR"
 # minimal PATH).
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
+# File to remember the last client name between runs
+LAST_CLIENT_FILE="$SCRIPT_DIR/.last-client"
+LAST_CLIENT=""
+[[ -f "$LAST_CLIENT_FILE" ]] && LAST_CLIENT=$(cat "$LAST_CLIENT_FILE")
+
 # ---- folder ----
 FOLDER="${1:-}"
 if [[ -z "$FOLDER" ]]; then
@@ -38,9 +43,34 @@ return t
 OSA
 ) || exit 1
 
+# ---- client ----
+CLIENT=$(osascript <<OSA
+set c to text returned of (display dialog "Client name:" default answer "$LAST_CLIENT" with title "Make Contact Sheet")
+return c
+OSA
+) || exit 1
+
+# Save for next run
+echo -n "$CLIENT" > "$LAST_CLIENT_FILE"
+
+# ---- video files URL ----
+VIDEO_URL=$(osascript <<OSA
+set u to text returned of (display dialog "Video files URL (e.g. Frame.io link):" default answer "" with title "Make Contact Sheet")
+return u
+OSA
+) || exit 1
+
+# ---- notes ----
+NOTES=$(osascript <<OSA
+set n to text returned of (display dialog "Notes:" default answer "" with title "Make Contact Sheet")
+return n
+OSA
+) || exit 1
+
 # ---- publish slug (blank = local only) ----
+DEFAULT_SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | tr -cd 'a-z0-9-')
 SLUG=$(osascript <<OSA
-set s to text returned of (display dialog "Publish slug (leave blank for local-only):" default answer "" with title "Make Contact Sheet")
+set s to text returned of (display dialog "Publish slug (leave blank for local-only):" default answer "$DEFAULT_SLUG" with title "Make Contact Sheet")
 return s
 OSA
 ) || exit 1
@@ -51,6 +81,9 @@ if [[ -n "$SLUG" ]]; then
 fi
 
 ARGS=("$FOLDER" --title "$TITLE" --pdf --pageless)
+[[ -n "$CLIENT" ]]    && ARGS+=(--client "$CLIENT")
+[[ -n "$VIDEO_URL" ]] && ARGS+=(--url "$VIDEO_URL")
+[[ -n "$NOTES" ]]     && ARGS+=(--notes "$NOTES")
 if [[ -n "$SLUG" ]]; then
   ARGS+=(--publish "$SLUG")
 fi

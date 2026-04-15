@@ -77,6 +77,15 @@
   .caption .name { color: var(--fg); }
   .caption .sub { color: var(--muted); font-size: 11px; margin-top: 2px; font-variant-numeric: tabular-nums; }
 
+  .sheet-info {
+    margin-bottom: 28px; color: var(--muted); font-size: 13px; line-height: 1.6;
+  }
+  .sheet-info .info-row { margin-bottom: 4px; }
+  .sheet-info .info-label { color: var(--fg); font-weight: 500; }
+  .sheet-info a { color: var(--accent); text-decoration: none; }
+  .sheet-info a:hover { text-decoration: underline; }
+  .sheet-info .info-contact { white-space: pre-line; }
+
   footer.sheet-foot {
     margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border);
     color: var(--muted); font-size: 11px; display: flex; justify-content: space-between; gap: 16px;
@@ -105,11 +114,12 @@
   </div>
 </header>
 
+<section class="sheet-info" id="sheet-info"></section>
+
 <main class="grid" id="sheet"></main>
 
 <footer class="sheet-foot">
   <span id="sheet-source"></span>
-  <span>Generated with Video Thumbnail Contact Sheet</span>
 </footer>
 
 <!-- DATA:START -->
@@ -140,6 +150,18 @@
   document.getElementById("sheet-total").textContent = totalSeconds ? `total ${fmtDuration(totalSeconds)}` : "";
   document.getElementById("sheet-generated").textContent = data.generatedAt ? `generated ${data.generatedAt}` : "";
   document.getElementById("sheet-source").textContent = data.source || "";
+
+  // -- Project info section --
+  const infoEl = document.getElementById("sheet-info");
+  const infoRows = [];
+  if (data.client) infoRows.push(`<div class="info-row"><span class="info-label">Client:</span> ${esc(data.client)}</div>`);
+  if (data.url) infoRows.push(`<div class="info-row"><span class="info-label">Video files:</span> <a href="${esc(data.url)}" target="_blank" rel="noopener">${esc(data.url)}</a></div>`);
+  if (data.notes) infoRows.push(`<div class="info-row"><span class="info-label">Notes:</span> ${esc(data.notes)}</div>`);
+  if (data.contact) infoRows.push(`<div class="info-row"><span class="info-label">Contact:</span><div class="info-contact">${esc(data.contact)}</div></div>`);
+  infoEl.innerHTML = infoRows.join("\n");
+  if (!infoRows.length) infoEl.style.display = "none";
+
+  function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
 
   const grid = document.getElementById("sheet");
   const frag = document.createDocumentFragment();

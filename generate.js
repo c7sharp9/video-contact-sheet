@@ -68,6 +68,10 @@ if (!args._[0]) {
 
 const videosDir = path.resolve(args._[0]);
 const title = args.title || path.basename(videosDir);
+const client = args.client || "";
+const videoUrl = args.url || "";
+const notes = args.notes || "";
+const contact = args.contact || "Jonathan Ayala\njon@innerviewmedia.com";
 const recursive = !!args.recursive;
 const frameSpec = args.frame || "10%";
 const width = parseInt(args.width || "480", 10);
@@ -274,6 +278,10 @@ async function main() {
 
   const data = {
     title,
+    client,
+    url: videoUrl,
+    notes,
+    contact,
     source: videosDir,
     generatedAt: new Date().toISOString().replace("T", " ").slice(0, 16) + " UTC",
     videos: clean,
@@ -357,14 +365,12 @@ async function main() {
     await fs.copyFile(outPath, destFile);
     console.log(`[pub]   copied → ${destFile}`);
 
-    // Regenerate index.html listing every published sheet
-    await writePublishIndex(publishRepo);
-    console.log(`[pub]   updated index.html`);
-
     if (dryRun) { console.log("[pub]   dry-run, skipping commit/push"); }
     else {
       const git = (...a) => run("git", a, { cwd: publishRepo });
-      await git("add", `${slug}.html`, "index.html");
+      // Pull remote changes first (GitHub Actions may have pushed since last run)
+      await git("pull", "--rebase", "origin", "main");
+      await git("add", `${slug}.html`);
       // commit only if there are changes
       try {
         await run("git", ["diff", "--cached", "--quiet"], { cwd: publishRepo });

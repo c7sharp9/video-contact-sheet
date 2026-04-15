@@ -154,17 +154,51 @@
 
 ---
 
-## 2026-04-13 — Auto-regenerate `client-preview/index.html` on every publish
+## 2026-04-13 → 2026-04-14 — Public index replaced by GitHub Action README
 
-**Context:** The Pages repo had no index — anyone visiting `c7sharp9.github.io/client-preview/` got a 404 (or GitHub's default listing if directory listing was on). Jonathan asked for a "running document of all URLs published."
+**Context:** Originally baked `index.html` generation into `generate.js` on every `--publish`. Problem: the public index at `c7sharp9.github.io/client-preview/` let any client see the full list of published pages by modifying the URL.
 
 **Alternatives considered:**
-- Separate script `build-index.js` run manually before push.
-- Crontab or GitHub Action that rebuilds the index.
-- Bake index generation into `generate.js` — runs automatically on every `--publish`.
+- Client-side PIN gate on `index.html` — stops casual browsing but view-source bypasses it.
+- Hash-based obfuscation — encrypted page list, decrypted with PIN.
+- Remove public index entirely; auto-generate a `README.md` via GitHub Action for internal use only.
 
-**Chosen:** Bake into `generate.js`. Every `--publish` regenerates `index.html` from the filesystem.
+**Chosen:** Remove public index. GitHub Action generates `README.md` with full live URLs — visible only in the repo, not on GitHub Pages.
 
-**Reasoning:** Zero ceremony — the index can never drift out of sync with the actual files. No CI dependency. No separate command to remember. If someone manually drops a `.html` into the repo and pushes without going through `generate.js`, the next `--publish` will pick it up automatically.
+**Reasoning:** Clients should only see their own page via a direct URL. The README gives Jonathan a convenient table of all pages with clickable URLs when browsing the repo, without exposing them publicly. GitHub Action ensures it stays in sync regardless of how files enter the repo.
 
-**Trade-offs accepted:** `generate.js` now owns one more concern (a small HTML template inline). Acceptable — it's ~50 lines and tightly scoped to one function (`writePublishIndex`).
+**Trade-offs accepted:** No public listing. If Jonathan ever wants a portal for a trusted client to browse multiple sheets, that's a separate feature.
+
+---
+
+## 2026-04-14 — Project metadata via CLI flags, not sidecar file (for now)
+
+**Context:** Wanted to add client name, video files URL, notes, and contact info to the contact sheet. Roadmap had planned a `project.json` sidecar approach.
+
+**Alternatives considered:**
+- `project.json` sidecar in the video folder — auto-detected, no flags to remember. But requires creating a file before each run.
+- CLI flags (`--client`, `--url`, `--notes`, `--contact`) — immediate, no file management.
+- Both — flags override sidecar values.
+
+**Chosen:** CLI flags first, with `make-sheet` prompts. Sidecar remains a future enhancement.
+
+**Reasoning:** The interactive wrapper already prompts for each field, so CLI flags integrate naturally. A sidecar adds value when the same project gets multiple sheets (avoiding re-entry), but that hasn't happened yet. Ship what works now.
+
+**Trade-offs accepted:** Re-entering client/URL/notes on each run. Mitigated by `make-sheet` remembering the last client name. Sidecar will eliminate this when needed.
+
+---
+
+## 2026-04-14 — `--publish` pulls before pushing
+
+**Context:** GitHub Action (README regeneration) pushes a commit shortly after each manual push. On the next `--publish`, the local repo is behind the remote, and `git push` fails silently.
+
+**Alternatives considered:**
+- Force push — dangerous, could overwrite Action commits.
+- Pull after failure — reactive, messy error handling.
+- Always pull before push — proactive, clean.
+
+**Chosen:** `git pull --rebase origin main` before staging and committing.
+
+**Reasoning:** Rebase keeps the commit history linear. The pull is fast (one small commit from the Action). Eliminates the class of "push rejected" failures entirely.
+
+**Trade-offs accepted:** Slightly slower publish (one extra network round trip). Negligible.

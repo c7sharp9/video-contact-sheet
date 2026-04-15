@@ -14,20 +14,26 @@ A single-file Node CLI that scans a folder of videos, extracts one poster frame 
 ## How to run locally
 
 ```sh
-# Interactive wrapper (folder picker, prompts for title + slug, opens outputs)
+# Interactive wrapper (folder picker, prompts for title/client/url/notes/slug, opens outputs)
 ./make-sheet
 
 # Direct CLI — generates to ./output/<folder>.html
 node generate.js "/path/to/videos" --title "Project Name"
 
-# Full-featured: pageless PDF + publish to GitHub Pages (commits + pushes)
-node generate.js "/path/to/videos" --title "Pretty Title" --pdf --pageless --publish smith-wedding-2026
+# Full-featured: metadata + pageless PDF + publish to GitHub Pages
+node generate.js "/path/to/videos" --title "Pretty Title" \
+  --client "Client Name" --url "https://frame.io/..." --notes "First pass" \
+  --pdf --pageless --publish smith-wedding-2026
 
 # Dry-run publish (copies file, skips git commit/push)
 node generate.js "/path/to/videos" --publish slug --dry-run
 ```
 
 Key flags (full list in `generate.js` JSDoc header):
+- `--client "Name"` — client name (displayed in info section)
+- `--url "https://..."` — video files URL (clickable link in info section)
+- `--notes "text"` — freeform notes (displayed in info section)
+- `--contact "Name\nemail"` — contact info (defaults to Jonathan Ayala / jon@innerviewmedia.com)
 - `--frame 10%` | `--frame 3s` | `--frame 00:00:05` — timestamp for the poster
 - `--width 480` — thumbnail width px
 - `--recursive` — recurse into subfolders
@@ -35,7 +41,7 @@ Key flags (full list in `generate.js` JSDoc header):
 - `--pdf` — also render a PDF via Puppeteer (default: Letter landscape paginated)
 - `--pageless` — with `--pdf`, render a single continuous page sized to the full document
 - `--no-embed` — write thumbs as sibling files instead of base64
-- `--publish [slug]` — copy output into `~/Code/client-preview/<slug>.html`, regenerate the repo's `index.html`, commit, push
+- `--publish [slug]` — copy output into `~/Code/client-preview/<slug>.html`, pull, commit, push
 - `--repo <path>` — override the client-preview clone location
 
 No env vars. No secrets.
@@ -45,7 +51,7 @@ There's a `.claude/launch.json` entry called **preview** — it starts a tiny st
 ## How it deploys
 
 - **The tool itself:** NOT DEPLOYED. Runs locally. No build, no release pipeline.
-- **The generated HTML outputs:** land in `c7sharp9/client-preview` (via `--publish`). GitHub Pages auto-serves at `https://c7sharp9.github.io/client-preview/<slug>.html` within ~30 seconds of push. An auto-generated `index.html` at the root of that repo lists every published page, newest first; it's regenerated on every `--publish`.
+- **The generated HTML outputs:** land in `c7sharp9/client-preview` (via `--publish`). GitHub Pages auto-serves at `https://c7sharp9.github.io/client-preview/<slug>.html` within ~30 seconds of push. A GitHub Action auto-generates a `README.md` in the repo with full live URLs (no public index page — clients only see pages shared via direct URL).
 
 ## Live URL
 
@@ -76,10 +82,12 @@ Cowork (iCloud-synced) half:
 - Branch is `main`
 - Status 🟢 Living — first real run 2026-04-13 (Vasquez Implant, 40 clips, published live)
 - Puppeteer installed; `--pdf --pageless` verified end-to-end
-- `make-sheet` interactive wrapper exists for Shortcuts / Quick Action use
-- Auto-generated `index.html` in `client-preview` regenerates on every `--publish`
+- `make-sheet` interactive wrapper prompts for folder, title, client, video files URL, notes, and publish slug. Client auto-fills from last run (`.last-client`); slug auto-fills from title.
+- Project metadata (client, video files URL, notes, contact) renders in an info section above the thumbnail grid. Contact defaults to Jonathan Ayala / jon@innerviewmedia.com.
+- GitHub Action in `client-preview` auto-generates `README.md` with live URLs on every push. No public index page.
+- `--publish` runs `git pull --rebase` before pushing to stay in sync with Action commits.
 - Test scaffolding (`_test/`, `output/`) is gitignored — recreate ad hoc with `ffmpeg -f lavfi -i testsrc=...` when debugging
-- **Next on deck (see ROADMAP):** per-project metadata via sidecar `project.json` (Frame.io URL, client info, deliverables) rendered as a "Project Info" section above the grid
+- **Next on deck (see ROADMAP):** per-project metadata via sidecar `project.json` for auto-populating fields without re-typing
 
 ## Don't get tripped up by
 
