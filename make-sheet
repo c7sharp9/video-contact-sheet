@@ -36,6 +36,18 @@ fi
 
 DEFAULT_TITLE=$(basename "$FOLDER")
 
+# ---- clean mode? ----
+# Clean mode hides title, metadata, info section, and footer — just the grid.
+# When clean is chosen, skip the client/URL/notes prompts since they won't appear.
+MODE=$(osascript <<OSA
+set m to button returned of (display dialog "Sheet style:" with title "Make Contact Sheet" buttons {"Standard", "Clean (grid only)"} default button "Standard")
+return m
+OSA
+) || exit 1
+
+CLEAN=0
+[[ "$MODE" == "Clean (grid only)" ]] && CLEAN=1
+
 # ---- title ----
 TITLE=$(osascript <<OSA
 set t to text returned of (display dialog "Title for the contact sheet:" default answer "$DEFAULT_TITLE" with title "Make Contact Sheet")
@@ -43,29 +55,33 @@ return t
 OSA
 ) || exit 1
 
-# ---- client ----
-CLIENT=$(osascript <<OSA
+# Metadata prompts only for Standard mode
+CLIENT=""
+VIDEO_URL=""
+NOTES=""
+if [[ "$CLEAN" == "0" ]]; then
+  # ---- client ----
+  CLIENT=$(osascript <<OSA
 set c to text returned of (display dialog "Client name:" default answer "$LAST_CLIENT" with title "Make Contact Sheet")
 return c
 OSA
 ) || exit 1
+  echo -n "$CLIENT" > "$LAST_CLIENT_FILE"
 
-# Save for next run
-echo -n "$CLIENT" > "$LAST_CLIENT_FILE"
-
-# ---- video files URL ----
-VIDEO_URL=$(osascript <<OSA
+  # ---- video files URL ----
+  VIDEO_URL=$(osascript <<OSA
 set u to text returned of (display dialog "Video files URL (e.g. Frame.io link):" default answer "" with title "Make Contact Sheet")
 return u
 OSA
 ) || exit 1
 
-# ---- notes ----
-NOTES=$(osascript <<OSA
+  # ---- notes ----
+  NOTES=$(osascript <<OSA
 set n to text returned of (display dialog "Notes:" default answer "" with title "Make Contact Sheet")
 return n
 OSA
 ) || exit 1
+fi
 
 # ---- orientation ----
 ORIENTATION=$(osascript <<OSA
@@ -88,6 +104,7 @@ if [[ -n "$SLUG" ]]; then
 fi
 
 ARGS=("$FOLDER" --title "$TITLE" --pdf --pageless)
+[[ "$CLEAN" == "1" ]] && ARGS+=(--clean)
 [[ -n "$CLIENT" ]]    && ARGS+=(--client "$CLIENT")
 [[ -n "$VIDEO_URL" ]] && ARGS+=(--url "$VIDEO_URL")
 [[ -n "$NOTES" ]]     && ARGS+=(--notes "$NOTES")
