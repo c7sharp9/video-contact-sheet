@@ -26,19 +26,37 @@
  *   --repo <path>       Local path to the client-preview clone
  *                       (default: ~/Code/client-preview)
  *   --dry-run           With --publish: copy file but don't commit/push
+ *   --clean             Render a "clean" sheet: no title, header, metadata,
+ *                       info section, or footer — just the thumbnail grid.
+ *   --client "Name"     Client name (displayed in info section)
+ *   --url "https://..." Video files URL (clickable link in info section)
+ *   --notes "text"      Freeform notes (displayed in info section)
+ *   --contact "Text"    Contact info (defaults: see settings.json)
  *
+ * User-editable defaults live in settings.json (contact, publishRepo, etc.).
  * Requires: ffmpeg + ffprobe on PATH. Puppeteer only if --pdf.
  */
 
 import { spawn } from "node:child_process";
-import { promises as fs } from "node:fs";
+import { promises as fs, readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import os from "node:os";
 
-const DEFAULT_PUBLISH_REPO = `${process.env.HOME}/Code/client-preview`;
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// ---------- load user defaults from settings.json ----------
+const SETTINGS_PATH = path.join(__dirname, "settings.json");
+let SETTINGS = {};
+if (existsSync(SETTINGS_PATH)) {
+  try { SETTINGS = JSON.parse(readFileSync(SETTINGS_PATH, "utf8")); }
+  catch (e) { console.warn(`[warn] Could not parse settings.json: ${e.message}`); }
+}
+function expandHome(p) { return p && p.startsWith("~") ? p.replace("~", process.env.HOME) : p; }
+
+const DEFAULT_PUBLISH_REPO = expandHome(SETTINGS.publishRepo) || `${process.env.HOME}/Code/client-preview`;
+const DEFAULT_CONTACT = SETTINGS.contact || "Jonathan Ayala\njon@innerviewmedia.com";
+const DEFAULT_PUBLISH_BASE_URL = SETTINGS.publishBaseUrl || "https://c7sharp9.github.io/client-preview";
 
 const VIDEO_EXTS = new Set([
   ".mp4", ".mov", ".m4v", ".mkv", ".webm", ".avi", ".wmv", ".flv",
@@ -71,14 +89,15 @@ const title = args.title || path.basename(videosDir);
 const client = args.client || "";
 const videoUrl = args.url || "";
 const notes = args.notes || "";
-const contact = args.contact || "Jonathan Ayala\njon@innerviewmedia.com";
+const contact = args.contact || DEFAULT_CONTACT;
+const clean = !!args.clean;
 const recursive = !!args.recursive;
-const frameSpec = args.frame || "10%";
-const width = parseInt(args.width || "480", 10);
-const qscale = String(args.quality || 4);
+const frameSpec = args.frame || SETTINGS.frame || "10%";
+const width = parseInt(args.width || SETTINGS.width || "480", 10);
+const qscale = String(args.quality || SETTINGS.quality || 4);
 const templatePath = path.resolve(args.template || path.join(__dirname, "template.html"));
 const embed = !args["no-embed"];
-const concurrency = Math.max(1, parseInt(args.concurrency || "4", 10));
+const concurrency = Math.max(1, parseInt(args.concurrency || SETTINGS.concurrency || "4", 10));
 const outPath = path.resolve(
   args.out || path.join(__dirname, "output", `${path.basename(videosDir)}.html`)
 );
@@ -275,7 +294,7 @@ async function main() {
     };
   });
 
-  const clean = entries.filter(Boolean);
+  const videoEntries = entries.filter(Boolean);
 
   const data = {
     title,
@@ -283,10 +302,11 @@ async function main() {
     url: videoUrl,
     notes,
     contact,
+    clean,
     source: videosDir,
     generatedAt: new Date().toISOString().replace("T", " ").slice(0, 16) + " UTC",
     orientation: vertical ? "vertical" : "horizontal",
-    videos: clean,
+    videos: videoEntries,
   };
 
   const template = await fs.readFile(templatePath, "utf8");
@@ -380,7 +400,7 @@ async function main() {
       } catch {
         await git("commit", "-m", `Add contact sheet: ${slug}`);
         await git("push");
-        console.log(`[pub]   pushed → https://c7sharp9.github.io/client-preview/${slug}.html`);
+        console.log(`[pub]   pushed → ${DEFAULT_PUBLISH_BASE_URL}/${slug}.html`);
       }
     }
   }

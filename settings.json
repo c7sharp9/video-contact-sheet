@@ -1,0 +1,13 @@
+{
+  "_comment": "Defaults for generate.js. CLI flags override these. Edit freely.",
+
+  "contact": "Jonathan Ayala\njon@innerviewmedia.com",
+
+  "frame": "10%",
+  "width": 480,
+  "quality": 4,
+  "concurrency": 4,
+
+  "publishRepo": "~/Code/client-preview",
+  "publishBaseUrl": "https://c7sharp9.github.io/client-preview"
+}

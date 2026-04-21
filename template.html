@@ -27,6 +27,20 @@
 
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: var(--bg); color: var(--fg); font-family: var(--font); }
+
+  /* Dark, thin scrollbar so the page blends into dark embeds (client dashboards) */
+  html { scrollbar-color: #2a2a2f #0e0e10; scrollbar-width: thin; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #0e0e10; }
+  ::-webkit-scrollbar-thumb { background: #2a2a2f; border-radius: 10px; border: 2px solid #0e0e10; }
+  ::-webkit-scrollbar-thumb:hover { background: #3a3a42; }
+  ::-webkit-scrollbar-corner { background: #0e0e10; }
+
+  /* Clean mode hides the header, info section, and footer — grid only */
+  body.clean header.sheet-head,
+  body.clean .sheet-info,
+  body.clean footer.sheet-foot { display: none !important; }
+  body.clean { padding: 24px; border: none; }
   body {
     padding: 40px 48px 80px;
     border: 1px solid var(--border);
@@ -143,6 +157,8 @@
   }
 
   const totalSeconds = data.videos.reduce((a, v) => a + (v.duration || 0), 0);
+
+  if (data.clean) document.body.classList.add("clean");
 
   document.title = data.title || document.title;
   document.getElementById("sheet-title").textContent = data.title || "Video Contact Sheet";
