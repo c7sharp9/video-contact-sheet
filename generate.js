@@ -98,8 +98,10 @@ const qscale = String(args.quality || SETTINGS.quality || 4);
 const templatePath = path.resolve(args.template || path.join(__dirname, "template.html"));
 const embed = !args["no-embed"];
 const concurrency = Math.max(1, parseInt(args.concurrency || SETTINGS.concurrency || "4", 10));
+// Sanitize title for use as a filename: strip filesystem-reserved chars, collapse spaces.
+const safeTitle = title.replace(/[\/\\:*?"<>|]/g, "").replace(/\s+/g, " ").trim();
 const outPath = path.resolve(
-  args.out || path.join(__dirname, "output", `${path.basename(videosDir)}.html`)
+  args.out || path.join(__dirname, "output", `${safeTitle}.html`)
 );
 const makePdf = !!args.pdf;
 const publish = args.publish; // true (flag only) or string (slug)

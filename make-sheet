@@ -118,9 +118,10 @@ fi
 echo "[make-sheet] node generate.js ${ARGS[*]}"
 node generate.js "${ARGS[@]}"
 
-# Open the outputs
-OUT_HTML="$SCRIPT_DIR/output/$(basename "$FOLDER").html"
-OUT_PDF="$SCRIPT_DIR/output/$(basename "$FOLDER").pdf"
+# Open the outputs (filename comes from the title, sanitized)
+SAFE_TITLE=$(echo "$TITLE" | tr -d '/\\:*?"<>|' | tr -s ' ')
+OUT_HTML="$SCRIPT_DIR/output/$SAFE_TITLE.html"
+OUT_PDF="$SCRIPT_DIR/output/$SAFE_TITLE.pdf"
 [[ -f "$OUT_HTML" ]] && open "$OUT_HTML"
 [[ -f "$OUT_PDF" ]]  && open "$OUT_PDF"
 
