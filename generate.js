@@ -298,6 +298,16 @@ async function main() {
 
   const videoEntries = entries.filter(Boolean);
 
+  // Compute the published page URL if --publish is set
+  let pageUrl = "";
+  if (publish) {
+    const slug = (typeof publish === "string" ? publish : path.basename(outPath, ".html"))
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    pageUrl = `https://c7sharp9.github.io/client-preview/${slug}.html`;
+  }
+
   const data = {
     title,
     client,
@@ -305,6 +315,7 @@ async function main() {
     notes,
     contact,
     clean,
+    pageUrl,
     source: videosDir,
     generatedAt: new Date().toISOString().replace("T", " ").slice(0, 16) + " UTC",
     orientation: vertical ? "vertical" : "horizontal",

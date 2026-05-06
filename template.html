@@ -165,7 +165,12 @@
   document.getElementById("sheet-count").textContent = `${data.videos.length} video${data.videos.length === 1 ? "" : "s"}`;
   document.getElementById("sheet-total").textContent = totalSeconds ? `total ${fmtDuration(totalSeconds)}` : "";
   document.getElementById("sheet-generated").textContent = data.generatedAt ? `generated ${data.generatedAt}` : "";
-  document.getElementById("sheet-source").textContent = data.source || "";
+  const sourceEl = document.getElementById("sheet-source");
+  if (data.pageUrl) {
+    sourceEl.innerHTML = `<a href="${esc(data.pageUrl)}" style="color:var(--muted)">${esc(data.pageUrl)}</a>`;
+  } else {
+    sourceEl.textContent = data.source || "";
+  }
 
   // -- Project info section --
   const infoEl = document.getElementById("sheet-info");
@@ -174,6 +179,7 @@
   if (data.url) infoRows.push(`<div class="info-row"><span class="info-label">Video files:</span> <a href="${esc(data.url)}" target="_blank" rel="noopener">${esc(data.url)}</a></div>`);
   if (data.notes) infoRows.push(`<div class="info-row"><span class="info-label">Notes:</span> ${esc(data.notes)}</div>`);
   if (data.contact) infoRows.push(`<div class="info-row"><span class="info-label">Contact:</span><div class="info-contact">${esc(data.contact)}</div></div>`);
+  if (data.pageUrl) infoRows.push(`<div class="info-row"><span class="info-label">This page:</span> <a href="${esc(data.pageUrl)}" target="_blank" rel="noopener">${esc(data.pageUrl)}</a></div>`);
   infoEl.innerHTML = infoRows.join("\n");
   if (!infoRows.length) infoEl.style.display = "none";
 
